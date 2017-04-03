@@ -1,0 +1,57 @@
+diff -Naur hyperwords/hyperwords/representations/embedding.py my_hyperwords/hyperwords/representations/embedding.py
+--- hyperwords/hyperwords/representations/embedding.py	2015-12-01 21:32:44.906540143 -0800
++++ my_hyperwords/hyperwords/representations/embedding.py	2015-12-01 21:36:01.445553408 -0800
+@@ -13,10 +13,15 @@
+     def __init__(self, path, normalize=True):
+         self.m = np.load(path + '.npy')
+         if normalize:
++            self.normalize2()
+             self.normalize()
+         self.dim = self.m.shape[1]
+         self.wi, self.iw = load_vocabulary(path + '.vocab')
+ 
++    def normalize2(self):
++        norm = np.sqrt(np.sum(self.m * self.m, axis=0))
++        self.m = self.m / norm[np.newaxis, :]
++
+     def normalize(self):
+         norm = np.sqrt(np.sum(self.m * self.m, axis=1))
+         self.m = self.m / norm[:, np.newaxis]
+@@ -96,6 +101,7 @@
+         self.m = np.vstack([m_joint, m_only1, m_only2])
+         
+         if normalize:
++            self.normalize2()
+             self.normalize()
+ 
+ 
+diff -Naur hyperwords/hyperwords/representations/representation_factory.py my_hyperwords/hyperwords/representations/representation_factory.py
+--- hyperwords/hyperwords/representations/representation_factory.py	2015-12-01 21:32:44.907540143 -0800
++++ my_hyperwords/hyperwords/representations/representation_factory.py	2015-12-01 21:36:01.445553408 -0800
+@@ -23,6 +23,6 @@
+         
+     else:
+         if w_c:
+-            return EnsembleEmbedding(Embedding(path + '.words', False), Embedding(path + '.contexts', False), True)
++            return EnsembleEmbedding(Embedding(path + '.words', True), Embedding(path + '.contexts', True), True)
+         else:
+             return Embedding(path + '.words', True)
+diff -Naur hyperwords/hyperwords/text2numpy.py my_hyperwords/hyperwords/text2numpy.py
+--- hyperwords/hyperwords/text2numpy.py	2015-12-01 21:32:44.907540143 -0800
++++ my_hyperwords/hyperwords/text2numpy.py	2015-12-01 21:36:01.471553410 -0800
+@@ -27,11 +27,11 @@
+ def read_vectors(path):
+     vectors = {}
+     with open(path) as f:
+-        first_line = True
++        #first_line = True
+         for line in f:
+-            if first_line:
+-                first_line = False
+-                continue
++            #if first_line:
++            #    first_line = False
++            #    continue
+             tokens = line.strip().split(' ')
+             vectors[tokens[0]] = np.asarray([float(x) for x in tokens[1:]])
+     return vectors

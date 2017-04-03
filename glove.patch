@@ -1,0 +1,150 @@
+diff -Naur glove/cooccur.c glove.updated/cooccur.c
+--- glove/cooccur.c	2014-08-27 14:18:00.000000000 -0700
++++ glove.updated/cooccur.c	2015-11-30 13:52:58.556247871 -0800
+@@ -215,7 +215,8 @@
+         old->val += new.val;
+         return 0; // Indicates duplicate entry
+     }
+-    fwrite(old, sizeof(CREC), 1, fout);
++    //fwrite(old, sizeof(CREC), 1, fout);
++    fprintf(fout, "%d %d %lf\n", old->word1, old->word2, old->val);
+     *old = new;
+     return 1; // Actually wrote to file
+ }
+@@ -267,7 +268,8 @@
+             insert(pq, new, size);
+         }
+     }
+-    fwrite(&old, sizeof(CREC), 1, fout);
++    //fwrite(&old, sizeof(CREC), 1, fout);
++    fprintf(fout, "%d %d %lf\n", old.word1, old.word2, old.val);
+     fprintf(stderr,"\033[0GMerging cooccurrence files: processed %lld lines.\n",++counter);
+     for(i=0;i<num;i++) {
+         sprintf(filename,"%s_%04d.bin",file_head,i);
+@@ -307,21 +309,23 @@
+     if(verbose > 1) fprintf(stderr, "loaded %lld words.\nBuilding lookup table...", vocab_size);
+     
+     /* Build auxiliary lookup table used to index into bigram_table */
+-    lookup = (long long *)calloc( vocab_size , sizeof(long long) );
++    lookup = (long long *)calloc( vocab_size + 1, sizeof(long long) );
+     if (lookup == NULL) {
+         fprintf(stderr, "Couldn't allocate memory!");
+         return 1;
+     }
+     lookup[0] = 1;
+     for(a = 1; a <= vocab_size; a++) {
+-        if((lookup[a] = max_product / a) < vocab_size) lookup[a] += lookup[a-1];
+-        else lookup[a] = lookup[a-1] + vocab_size;
++        if((lookup[a] = max_product / a) < vocab_size)
++            lookup[a] += lookup[a-1];
++        else
++            lookup[a] = lookup[a-1] + vocab_size;
+     }
+     if(verbose > 1) fprintf(stderr, "table contains %lld elements.\n",lookup[a-1]);
+     
+     /* Allocate memory for full array which will store all cooccurrence counts for words whose product of frequency ranks is less than max_product */
+     bigram_table = (real *)calloc( lookup[a-1] , sizeof(real) );
+-    if (lookup == NULL) {
++    if (bigram_table == NULL) {
+         fprintf(stderr, "Couldn't allocate memory!");
+         return 1;
+     }
+diff -Naur glove/glove.c glove.updated/glove.c
+--- glove/glove.c	2014-08-27 14:33:27.000000000 -0700
++++ glove.updated/glove.c	2015-11-30 13:52:58.557247871 -0800
+@@ -85,12 +85,24 @@
+     CREC cr;
+     real diff, fdiff, temp1, temp2;
+     FILE *fin;
+-    fin = fopen(input_file, "rb");
+-    fseeko(fin, (num_lines / num_threads * id) * (sizeof(CREC)), SEEK_SET); //Threads spaced roughly equally throughout file
++    fin = fopen(input_file, "rt");
++    //fseeko(fin, (num_lines / num_threads * id) * (sizeof(CREC)), SEEK_SET); //Threads spaced roughly equally throughout file
++    long long startPoint = num_lines / num_threads * id;
++    // go to start point
++    long long nlines = 0;
++    while(!feof(fin))
++    {
++      if(fgetc(fin) == '\n')
++      {
++        nlines++;
++        if (nlines >= startPoint) break;
++      }
++    }
+     cost[id] = 0;
+     
+     for(a = 0; a < lines_per_thread[id]; a++) {
+-        fread(&cr, sizeof(CREC), 1, fin);
++        //fread(&cr, sizeof(CREC), 1, fin);
++        fscanf(fin, "%d %d %lf", &cr.word1, &cr.word2, &cr.val);
+         if(feof(fin)) break;
+         
+         /* Get location of words in W & gradsq */
+@@ -198,11 +210,19 @@
+     real total_cost = 0;
+     fprintf(stderr, "TRAINING MODEL\n");
+     
+-    fin = fopen(input_file, "rb");
++    fin = fopen(input_file, "rt");
+     if(fin == NULL) {fprintf(stderr,"Unable to open cooccurrence file %s.\n",input_file); return 1;}
+-    fseeko(fin, 0, SEEK_END);
+-    file_size = ftello(fin);
+-    num_lines = file_size/(sizeof(CREC)); // Assuming the file isn't corrupt and consists only of CREC's
++    //fseeko(fin, 0, SEEK_END);
++    //file_size = ftello(fin);
++    //num_lines = file_size/(sizeof(CREC)); // Assuming the file isn't corrupt and consists only of CREC's
++    num_lines = 0;
++    while(!feof(fin))
++    {
++      if(fgetc(fin) == '\n')
++      {
++        num_lines++;
++      }
++    }
+     fclose(fin);
+     fprintf(stderr,"Read %lld lines.\n", num_lines);
+     if(verbose > 1) fprintf(stderr,"Initializing parameters...");
+diff -Naur glove/shuffle.c glove.updated/shuffle.c
+--- glove/shuffle.c	2014-08-27 14:19:44.000000000 -0700
++++ glove.updated/shuffle.c	2015-11-30 13:52:58.557247871 -0800
+@@ -61,7 +61,10 @@
+ /* Write contents of array to binary file */
+ int write_chunk(CREC *array, long size, FILE *fout) {
+     long i = 0;
+-    for(i = 0; i < size; i++) fwrite(&array[i], sizeof(CREC), 1, fout);
++    for(i = 0; i < size; i++) {
++        //fwrite(&array[i], sizeof(CREC), 1, fout);
++        fprintf(fout, "%d %d %lf\n", array[i].word1, array[i].word2, array[i].val);
++    }
+     return 0;
+ }
+ 
+@@ -89,7 +92,7 @@
+     fid = malloc(sizeof(FILE) * num);
+     for(fidcounter = 0; fidcounter < num; fidcounter++) { //num = number of temporary files to merge
+         sprintf(filename,"%s_%04d.bin",file_head, fidcounter);
+-        fid[fidcounter] = fopen(filename, "rb");
++        fid[fidcounter] = fopen(filename, "rt");
+         if(fid[fidcounter] == NULL) {
+             fprintf(stderr, "Unable to open file %s.\n",filename);
+             return 1;
+@@ -103,7 +106,8 @@
+         for(j = 0; j < num; j++) {
+             if(feof(fid[j])) continue;
+             for(k = 0; k < array_size / num; k++){
+-                fread(&array[i], sizeof(CREC), 1, fid[j]);
++                //fread(&array[i], sizeof(CREC), 1, fid[j]);
++                fscanf(fid[j], "%d %d %lf", &array[i].word1, &array[i].word2, &array[i].val);
+                 if(feof(fid[j])) break;
+                 i++;
+             }
+@@ -160,7 +164,8 @@
+             }
+             i = 0;
+         }
+-        fread(&array[i], sizeof(CREC), 1, fin);
++        //fread(&array[i], sizeof(CREC), 1, fin);
++        fscanf(fin, "%d %d %lf", &array[i].word1, &array[i].word2, &array[i].val);
+         if(feof(fin)) break;
+         i++;
+     }
