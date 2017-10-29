@@ -32,7 +32,7 @@ sudo apt-get install libboost-all-dev (on Ubuntu)
  
 ## Quick Start
 1. Download the code: ```git clone https://bitbucket.org/shihaoji/wordrank```
-2. Run ```.\install.sh``` to build the package (e.g., it downloads GloVe v.1.0 and HyperWords and applies patches to them, and then compiles the source code. Intel compiler is used as default. See the switch in .\install.sh to use g++ instead.)
+2. Run ```./install.sh``` to build the package (e.g., it downloads GloVe v.1.0 and HyperWords and applies patches to them, and then compiles the source code. Intel compiler is used as default. See the switch in ```./install.sh``` to use g++ instead.)
 3. Run the demo script: ```cd scripts; ./demo.sh``` (NUM_CORES=16 by default, set this to # of physical cores of your machine)
 4. Evaluate the models: ```cd scripts; ./eval.sh N (to evaluate the model after N iterations, e.g., N=200)```
 
