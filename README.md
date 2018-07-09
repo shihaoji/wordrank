@@ -19,10 +19,18 @@ WordRank is developed and tested on UNIX-based systems, with the following softw
 ## Environment Setup
 * Install Intel Parallel Studio XE Cluster Edition (i.e., Intel compiler, OpenMP, MPI and MKL. [free copies](https://software.intel.com/en-us/qualify-for-free-software) are available for some users)
 * Enable Intel C++ development environment
+
+Under ```~/intel/bin``` we’ll see the executables like ifort and icc. Rather than always load the libraries, we can create a file ```~/intel.sh``` with contents:
 ```
-source /opt/intel/compilers_and_libraries/linux/bin/compilervars.sh intel64 
-source /opt/intel/impi_latest/bin64/mpivars.sh (pointing to the path of your installation)
+. ~/intel/bin/compilervars.sh intel64
+. ~/intel/mkl/bin/mklvars.sh intel64
 ```
+
+Enable the Intel compilers each time you want to use them with:
+```
+. ~/intel.sh
+```
+
 * Install Boost library
 ```
 sudo yum install boost-devel (on RedHat/Centos)
