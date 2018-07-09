@@ -31,7 +31,7 @@ To be installed if custom install option is chosen
 * Intel MPI Library
 * GNU GDB
 
-* Enable Intel C++ development environment
+Enable Intel C++ development environment
 
 Under ```~/intel/bin``` we’ll see the executables like ifort and icc. Rather than always load the libraries, we can create a file ```~/intel.sh``` with contents:
 ```
