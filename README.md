@@ -18,18 +18,20 @@ WordRank is developed and tested on UNIX-based systems, with the following softw
 
 ## Environment Setup
 * Install Intel Parallel Studio XE Cluster Edition (i.e., Intel compiler, OpenMP, MPI and MKL. [free copies](https://software.intel.com/en-us/qualify-for-free-software) are available for some users)
-* Enable Intel C++ development environment
+
 
 To be installed if custom install option is chosen
 
-architecture: Intel64 (IA-32 not used)
-Intel C++ Compiler
-Intel Fortran Compiler
-Intel MKL for C/C++
-Intel MKL for Fortran
-LAPACK 95
-Intel MPI Library
-GNU GDB
+* architecture: Intel64 (IA-32 not used)
+* Intel C++ Compiler
+* Intel Fortran Compiler
+* Intel MKL for C/C++
+* Intel MKL for Fortran
+* LAPACK 95
+* Intel MPI Library
+* GNU GDB
+
+* Enable Intel C++ development environment
 
 Under ```~/intel/bin``` we’ll see the executables like ifort and icc. Rather than always load the libraries, we can create a file ```~/intel.sh``` with contents:
 ```
